@@ -6,8 +6,21 @@ if ! command -v curl &>/dev/null; then
     sudo apt update -y > /dev/null 2>&1 && sudo apt install curl -y > /dev/null 2>&1
 fi
 
+# Detect architecture
+arch=$(uname -m)
+
 # Get the latest release version from GitHub
 version=$(basename "$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/fosrl/newt/releases/latest)")
+
+# Set the download URL based on architecture
+if [[ "$arch" == "x86_64" ]]; then
+    newt_url="https://github.com/fosrl/newt/releases/download/$version/newt_linux_amd64"
+elif [[ "$arch" == "aarch64" ]]; then
+    newt_url="https://github.com/fosrl/newt/releases/download/$version/newt_linux_arm64"
+else
+    echo "Unknown architecture: $arch"
+    exit 1
+fi
 
 # Prompt for user input
 read -p 'ID: ' id
@@ -15,8 +28,8 @@ read -p 'Secret: ' secret
 read -p 'Endpoint: ' endpoint
 
 # Download and install Newt
-echo "Installing Newt version $version..."
-wget -q -O /usr/local/bin/newt "https://github.com/fosrl/newt/releases/download/$version/newt_linux_amd64"
+echo "Installing Newt version $version for $arch..."
+wget -q -O /usr/local/bin/newt "$newt_url"
 chmod +x /usr/local/bin/newt
 
 # Create systemd service for Newt
